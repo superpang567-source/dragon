@@ -43,6 +43,10 @@
             border-color: #2563eb;
             box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
         }
+        .product-card.expired {
+            border-color: #ef4444;
+            opacity: 0.7;
+        }
 
         .product-header {
             display: flex;
@@ -52,6 +56,8 @@
             cursor: pointer;
             background: #fafcff;
             transition: 0.15s;
+            flex-wrap: wrap;
+            gap: 6px;
         }
         .product-header:active { background: #f1f5f9; }
 
@@ -59,6 +65,7 @@
             display: flex;
             flex-direction: column;
             gap: 2px;
+            flex: 1;
         }
         .product-header .name {
             font-size: 1.1rem;
@@ -74,6 +81,29 @@
             font-weight: 400;
             color: #94a3b8;
         }
+
+        .product-header .right-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* 商品倒數計時器 */
+        .product-countdown {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #2563eb;
+            background: #dbeafe;
+            padding: 2px 12px;
+            border-radius: 40px;
+            white-space: nowrap;
+        }
+        .product-countdown.expired {
+            color: #ef4444;
+            background: #fee2e2;
+        }
+
         .product-header .badge {
             font-size: 0.75rem;
             background: #dbeafe;
@@ -86,12 +116,23 @@
             font-size: 1.3rem;
             color: #94a3b8;
             transition: 0.2s;
-            margin-left: 8px;
         }
         .product-card.active .toggle-icon {
             transform: rotate(180deg);
             color: #2563eb;
         }
+
+        /* 設定倒數按鈕（小） */
+        .set-countdown-btn {
+            background: #f1f5f9;
+            border: none;
+            border-radius: 40px;
+            padding: 2px 10px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            color: #475569;
+        }
+        .set-countdown-btn:active { background: #e2e8f0; }
 
         .product-body {
             display: none;
@@ -109,6 +150,7 @@
             padding: 10px 0 8px 0;
             font-size: 0.8rem;
             color: #64748b;
+            flex-wrap: wrap;
         }
         .product-body .stats-mini span { background: #f1f5f9; padding: 2px 12px; border-radius: 40px; }
 
@@ -161,8 +203,9 @@
             align-items: center;
             gap: 8px;
             font-size: 0.9rem;
+            flex-wrap: wrap;
         }
-        .product-body .order-list .o-name { font-weight: 600; flex: 1; }
+        .product-body .order-list .o-name { font-weight: 600; flex: 1; min-width: 40px; }
         .product-body .order-list .o-qty { background: #dbeafe; color: #2563eb; padding: 0 10px; border-radius: 40px; font-weight: 600; font-size: 0.8rem; }
         .product-body .order-list .o-amount { background: #fef3c7; color: #92400e; padding: 0 10px; border-radius: 40px; font-weight: 600; font-size: 0.8rem; }
         .product-body .order-list .o-del { background: none; border: none; color: #b91c1c; font-size: 1rem; cursor: pointer; padding: 0 4px; }
@@ -229,15 +272,8 @@
         }
         .dropdown-content button:active { background: #f1f5f9; }
         .dropdown-content .divider { height: 1px; background: #e9edf2; margin: 4px 12px; }
-        .dropdown-content .countdown-item {
-            padding: 6px 16px;
-            font-size: 0.8rem;
-            color: #475569;
-            border-bottom: 1px solid #e9edf2;
-        }
-        .dropdown-content .countdown-item .time { font-weight: 700; color: #2563eb; }
-        .dropdown-content .countdown-item .time.expired { color: #ef4444; }
 
+        /* 倒數設定視窗 */
         .countdown-modal {
             display: none;
             position: fixed;
@@ -256,7 +292,8 @@
             max-width: 400px;
             width: 100%;
         }
-        .countdown-modal .modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+        .countdown-modal .modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .countdown-modal .modal-sub { font-size: 0.85rem; color: #64748b; margin-bottom: 16px; }
         .countdown-modal .modal-body { display: flex; flex-direction: column; gap: 12px; }
         .countdown-modal .modal-body input {
             padding: 12px 16px;
@@ -288,6 +325,8 @@
         @media (max-width: 420px) {
             .product-body .add-form { flex-direction: column; }
             .product-body .add-form input[type="number"] { max-width: 100%; }
+            .product-header { flex-direction: column; align-items: stretch; }
+            .product-header .right-area { justify-content: flex-start; }
         }
     </style>
 </head>
@@ -302,9 +341,7 @@
             <div class="dropdown-wrapper">
                 <button class="dropdown-btn" id="dropdownBtn">⚙️</button>
                 <div class="dropdown-content" id="dropdownContent">
-                    <div class="countdown-item">⏰ <span class="time" id="dropdownCountdown">--:--:--</span></div>
-                    <button id="setCountdownBtn">設定倒數</button>
-                    <button id="resetBtn">重置全部</button>
+                    <button id="resetBtn">⟳ 重置全部</button>
                     <div class="divider"></div>
                     <button id="exportBtn">📤 匯出</button>
                     <button id="importBtn">📥 匯入</button>
@@ -313,12 +350,24 @@
         </div>
     </div>
 
+    <!-- 總統計 -->
+    <div class="global-stats">
+        <div><div class="num" id="totalPeople">0</div><div class="lbl">👤 人數</div></div>
+        <div><div class="num" id="totalQuantity">0</div><div class="lbl">📦 總組數</div></div>
+        <div><div class="num" id="totalPrice">0</div><div class="lbl">💰 總金額</div></div>
+    </div>
+
+    <!-- 商品列表 -->
+    <div class="product-list" id="productList"></div>
+
     <!-- 倒數設定視窗 -->
     <div class="countdown-modal" id="countdownModal">
         <div class="modal-content">
             <div class="modal-title">⏰ 設定倒數</div>
+            <div class="modal-sub" id="modalProductName">商品名稱</div>
             <div class="modal-body">
                 <input type="datetime-local" id="countdownDate">
+                <div style="font-size:0.75rem; color:#94a3b8; margin-top:-4px;">💡 設定截止時間，時間到自動關閉接龍</div>
             </div>
             <div class="modal-actions">
                 <button class="btn-cancel" id="modalCancel">取消</button>
@@ -327,19 +376,9 @@
         </div>
     </div>
 
-    <!-- 總統計 -->
-    <div class="global-stats">
-        <div><div class="num" id="totalPeople">0</div><div class="lbl">👤 人數</div></div>
-        <div><div class="num" id="totalQuantity">0</div><div class="lbl">🥯 總組數</div></div>
-        <div><div class="num" id="totalPrice">0</div><div class="lbl">💰 總金額</div></div>
-    </div>
-
-    <!-- 商品列表 -->
-    <div class="product-list" id="productList"></div>
-
     <!-- 底部 -->
     <div style="text-align:center; font-size:0.7rem; color:#b9c1cc; border-top:1px solid #f1f5f9; padding-top:12px; margin-top:4px;">
-        點擊商品展開接龍 · 一次僅展開一項 · +1 = 1組
+        點擊商品展開接龍 · 每樣商品獨立倒數
     </div>
 </div>
 
@@ -347,21 +386,21 @@
     (function() {
         "use strict";
 
-        const API_URL = 'https://script.google.com/macros/s/AKfycbySevQbyZ5WqFqevRE_pkWTj3GtWw8GBCIWsY87FGoeP3QlvTITOd87dIPLxNo7ifdk6A/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxnLPTMQXAsiMOyOSkswK3124epzO6TQUxyUClRXBaSHq6Ouc6tuMFH5CcwRAvf8EzW1Q/exec';
 
         // ===== 商品清單 =====
         const PRODUCTS = [
-            { id: 'p1', name: '🥯 滿滿起司貝果', price: 120, unit: 3, note: '🎉 嚐鮮價！回饋給阿邦好友' },
-            { id: 'p2', name: '🍞 香蒜軟法', price: 150, unit: 2, note: '🔥 人氣推薦' },
-            { id: 'p3', name: '🧀 雙倍起司吐司', price: 180, unit: 1, note: '🧀 起司控必買' },
+            { id: 'p1', name: '🥯 滿滿起司貝果', price: 120, unit: 3 },
+            { id: 'p2', name: '🍞 香蒜軟法', price: 150, unit: 2 },
+            { id: 'p3', name: '🧀 雙倍起司吐司', price: 180, unit: 1 },
         ];
+
+        // ===== 每個商品的倒數狀態 =====
+        let productCountdowns = {};  // { productId: { endTime: Date, interval: id } }
+        let isExpiredMap = {};       // { productId: true/false }
 
         // ===== 狀態 =====
         let allOrders = [];
-        let nextId = 1;
-        let countdownEnd = null;
-        let countdownInterval = null;
-        let isExpired = false;
         let isLoading = false;
         let activeProductId = null;
 
@@ -370,18 +409,20 @@
         const syncStatus = document.getElementById('syncStatus');
         const dropdownBtn = document.getElementById('dropdownBtn');
         const dropdownContent = document.getElementById('dropdownContent');
-        const dropdownCountdown = document.getElementById('dropdownCountdown');
-        const setCountdownBtn = document.getElementById('setCountdownBtn');
-        const countdownModal = document.getElementById('countdownModal');
-        const countdownDate = document.getElementById('countdownDate');
-        const modalConfirm = document.getElementById('modalConfirm');
-        const modalCancel = document.getElementById('modalCancel');
         const resetBtn = document.getElementById('resetBtn');
         const exportBtn = document.getElementById('exportBtn');
         const importBtn = document.getElementById('importBtn');
         const totalPeople = document.getElementById('totalPeople');
         const totalQuantity = document.getElementById('totalQuantity');
         const totalPrice = document.getElementById('totalPrice');
+
+        // 倒數設定視窗
+        const countdownModal = document.getElementById('countdownModal');
+        const countdownDate = document.getElementById('countdownDate');
+        const modalProductName = document.getElementById('modalProductName');
+        const modalConfirm = document.getElementById('modalConfirm');
+        const modalCancel = document.getElementById('modalCancel');
+        let settingProductId = null;
 
         // ===== 下拉選單 =====
         dropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownContent.classList.toggle('active'); });
@@ -424,7 +465,12 @@
 
         // ===== 新增 =====
         async function addOrder(productId, name, community, quantity) {
-            if (isExpired) { alert('⏰ 團購已截止'); return false; }
+            // 檢查該商品是否已截止
+            if (isExpiredMap[productId]) {
+                alert('⏰ 此商品已截止，無法新增訂單');
+                return false;
+            }
+
             const trimmedName = name.trim();
             const trimmedCommunity = community.trim();
             if (!trimmedName || !trimmedCommunity) return false;
@@ -471,49 +517,131 @@
             } catch (e) { alert('網路錯誤'); }
         }
 
-        // ===== 倒數 =====
-        function startCountdown() {
-            if (countdownInterval) clearInterval(countdownInterval);
-            updateCountdownDisplay();
-            countdownInterval = setInterval(updateCountdownDisplay, 1000);
+        // ===== 商品倒數計時 =====
+        function startProductCountdown(productId) {
+            const data = productCountdowns[productId];
+            if (!data || !data.endTime) return;
+            
+            // 清除舊的 interval
+            if (data.interval) {
+                clearInterval(data.interval);
+            }
+
+            updateProductCountdownDisplay(productId);
+            data.interval = setInterval(() => {
+                updateProductCountdownDisplay(productId);
+            }, 1000);
         }
-        function updateCountdownDisplay() {
-            if (!countdownEnd) {
-                dropdownCountdown.textContent = '--:--:--';
+
+        function updateProductCountdownDisplay(productId) {
+            const data = productCountdowns[productId];
+            if (!data || !data.endTime) {
+                updateCountdownElement(productId, '--:--:--', false);
                 return;
             }
-            const diff = countdownEnd - new Date();
+
+            const diff = data.endTime - new Date();
             if (diff <= 0) {
-                dropdownCountdown.textContent = '⏰ 已截止';
-                dropdownCountdown.className = 'time expired';
-                isExpired = true;
-                if (countdownInterval) clearInterval(countdownInterval);
+                isExpiredMap[productId] = true;
+                updateCountdownElement(productId, '⏰ 已截止', true);
+                if (data.interval) {
+                    clearInterval(data.interval);
+                    data.interval = null;
+                }
+                // 重新渲染以更新按鈕狀態
+                render();
                 return;
             }
-            isExpired = false;
+
+            isExpiredMap[productId] = false;
             const h = String(Math.floor(diff / (1000*60*60))).padStart(2,'0');
             const m = String(Math.floor((diff % (1000*60*60)) / (1000*60))).padStart(2,'0');
             const s = String(Math.floor((diff % (1000*60)) / 1000)).padStart(2,'0');
-            dropdownCountdown.textContent = `${h}:${m}:${s}`;
-            dropdownCountdown.className = 'time';
+            updateCountdownElement(productId, `${h}:${m}:${s}`, false);
         }
-        function setCountdown(dateTime) {
+
+        function updateCountdownElement(productId, text, isExpired) {
+            const el = document.querySelector(`#countdown-${productId}`);
+            if (el) {
+                el.textContent = text;
+                el.className = 'product-countdown' + (isExpired ? ' expired' : '');
+            }
+        }
+
+        function setProductCountdown(productId, dateTime) {
             const target = new Date(dateTime);
             if (isNaN(target.getTime()) || target <= new Date()) {
                 alert('請選擇未來的時間');
                 return;
             }
-            countdownEnd = target;
-            localStorage.setItem('countdownEnd', countdownEnd.toISOString());
-            startCountdown();
+
+            // 清除舊的
+            if (productCountdowns[productId] && productCountdowns[productId].interval) {
+                clearInterval(productCountdowns[productId].interval);
+            }
+
+            productCountdowns[productId] = {
+                endTime: target,
+                interval: null
+            };
+            isExpiredMap[productId] = false;
+            
+            // 儲存到 localStorage
+            saveCountdownsToStorage();
+
+            startProductCountdown(productId);
+            render();
             countdownModal.classList.remove('active');
-            dropdownContent.classList.remove('active');
+        }
+
+        function removeProductCountdown(productId) {
+            if (productCountdowns[productId]) {
+                if (productCountdowns[productId].interval) {
+                    clearInterval(productCountdowns[productId].interval);
+                }
+                delete productCountdowns[productId];
+                delete isExpiredMap[productId];
+                saveCountdownsToStorage();
+                render();
+            }
+        }
+
+        // ===== 儲存倒數設定 =====
+        function saveCountdownsToStorage() {
+            const data = {};
+            Object.keys(productCountdowns).forEach(key => {
+                if (productCountdowns[key] && productCountdowns[key].endTime) {
+                    data[key] = productCountdowns[key].endTime.toISOString();
+                }
+            });
+            localStorage.setItem('productCountdowns', JSON.stringify(data));
+        }
+
+        function loadCountdownsFromStorage() {
+            try {
+                const raw = localStorage.getItem('productCountdowns');
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                Object.keys(data).forEach(key => {
+                    const endTime = new Date(data[key]);
+                    if (endTime > new Date()) {
+                        productCountdowns[key] = { endTime: endTime, interval: null };
+                        isExpiredMap[key] = false;
+                    } else {
+                        isExpiredMap[key] = true;
+                    }
+                });
+            } catch (_) {}
         }
 
         // ===== 匯出 / 匯入 =====
         function exportData() {
             if (allOrders.length === 0) { alert('清單是空的'); return; }
-            const data = JSON.stringify({ orders: allOrders, exportedAt: new Date().toISOString() }, null, 2);
+            const data = JSON.stringify({ 
+                orders: allOrders, 
+                countdowns: productCountdowns,
+                exportedAt: new Date().toISOString() 
+            }, null, 2);
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -523,6 +651,7 @@
             URL.revokeObjectURL(url);
             dropdownContent.classList.remove('active');
         }
+
         function importData() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -544,6 +673,17 @@
                                         community: o.community || '未填寫',
                                         quantity: o.quantity
                                     });
+                                }
+                                // 匯入倒數設定
+                                if (data.countdowns) {
+                                    Object.keys(data.countdowns).forEach(key => {
+                                        const endTime = new Date(data.countdowns[key]);
+                                        if (endTime > new Date()) {
+                                            productCountdowns[key] = { endTime: endTime, interval: null };
+                                            isExpiredMap[key] = false;
+                                        }
+                                    });
+                                    saveCountdownsToStorage();
                                 }
                                 await loadOrders();
                                 alert('匯入成功！');
@@ -567,43 +707,99 @@
             render();
         }
 
+        // ===== 打開倒數設定視窗 =====
+        function openCountdownModal(productId) {
+            settingProductId = productId;
+            const product = PRODUCTS.find(p => p.id === productId);
+            modalProductName.textContent = product ? product.name : '';
+
+            // 預設明天晚上8點
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(20, 0, 0, 0);
+            const y = tomorrow.getFullYear();
+            const m = String(tomorrow.getMonth()+1).padStart(2,'0');
+            const d = String(tomorrow.getDate()).padStart(2,'0');
+            const h = String(tomorrow.getHours()).padStart(2,'0');
+            const min = String(tomorrow.getMinutes()).padStart(2,'0');
+            countdownDate.value = `${y}-${m}-${d}T${h}:${min}`;
+
+            countdownModal.classList.add('active');
+        }
+
         // ===== 渲染 =====
         function render() {
-            // 統計總量 - 用「組數」計算
+            // 統計總量
             const totalPeopleCount = allOrders.length;
             const totalQty = allOrders.reduce((s, o) => s + o.quantity, 0);
             const totalAmt = allOrders.reduce((s, o) => {
                 const p = PRODUCTS.find(p => p.id === o.productId);
-                return s + (p ? o.quantity * p.price : 0);  // 用 price（組價）
+                return s + (p ? o.quantity * p.price : 0);
             }, 0);
             totalPeople.textContent = totalPeopleCount;
             totalQuantity.textContent = totalQty;
             totalPrice.textContent = totalAmt;
+
+            // 啟動所有商品的倒數（如果還沒啟動）
+            Object.keys(productCountdowns).forEach(key => {
+                const data = productCountdowns[key];
+                if (data && data.endTime && !data.interval) {
+                    startProductCountdown(key);
+                }
+            });
 
             // 渲染商品列表
             productListEl.innerHTML = '';
             PRODUCTS.forEach(p => {
                 const orders = allOrders.filter(o => o.productId === p.id);
                 const qty = orders.reduce((s, o) => s + o.quantity, 0);
-                const amt = qty * p.price;  // 用 price（組價）
+                const amt = qty * p.price;
                 const isActive = (activeProductId === p.id);
+                const isExpired = isExpiredMap[p.id] || false;
+                const hasCountdown = productCountdowns[p.id] && productCountdowns[p.id].endTime;
 
                 const card = document.createElement('div');
-                card.className = 'product-card' + (isActive ? ' active' : '');
+                card.className = 'product-card' + (isActive ? ' active' : '') + (isExpired ? ' expired' : '');
 
                 // 標題列
                 const header = document.createElement('div');
                 header.className = 'product-header';
+                
+                // 倒數顯示
+                let countdownText = '--:--:--';
+                if (hasCountdown) {
+                    const diff = productCountdowns[p.id].endTime - new Date();
+                    if (diff <= 0) {
+                        countdownText = '⏰ 已截止';
+                    } else {
+                        const h = String(Math.floor(diff / (1000*60*60))).padStart(2,'0');
+                        const m = String(Math.floor((diff % (1000*60*60)) / (1000*60))).padStart(2,'0');
+                        const s = String(Math.floor((diff % (1000*60)) / 1000)).padStart(2,'0');
+                        countdownText = `${h}:${m}:${s}`;
+                    }
+                }
+
                 header.innerHTML = `
                     <div class="info">
                         <div class="name">${p.name}</div>
                         <div class="price">$${p.price} <small>/ ${p.unit}個</small></div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:6px;">
+                    <div class="right-area">
+                        <span class="product-countdown ${isExpired ? 'expired' : ''}" id="countdown-${p.id}">${countdownText}</span>
+                        <button class="set-countdown-btn" data-id="${p.id}">⏰</button>
                         <span class="badge">${orders.length}人 / ${qty}組</span>
                         <span class="toggle-icon">${isActive ? '▾' : '▸'}</span>
                     </div>
                 `;
+
+                // 設定倒數按鈕
+                const setBtn = header.querySelector('.set-countdown-btn');
+                setBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openCountdownModal(p.id);
+                });
+
                 header.addEventListener('click', () => toggleProduct(p.id));
 
                 // 接龍區
@@ -614,12 +810,13 @@
                         <span>👤 ${orders.length} 人</span>
                         <span>📦 ${qty} 組</span>
                         <span>💰 $${amt}</span>
+                        ${isExpired ? '<span style="color:#ef4444;">⏰ 已截止</span>' : ''}
                     </div>
                     <form class="add-form" id="form-${p.id}">
                         <input type="text" placeholder="姓名" class="name-input" required>
                         <input type="text" placeholder="社區" class="community-input" required>
                         <input type="number" placeholder="組數" value="1" min="1" max="99" class="qty-input">
-                        <button type="submit" id="add-btn-${p.id}">＋ 加入</button>
+                        <button type="submit" id="add-btn-${p.id}" ${isExpired ? 'disabled' : ''}>＋ 加入</button>
                     </form>
                     <ul class="order-list" id="ol-${p.id}">
                         ${orders.length === 0 ? '<div class="empty-msg">🛒 還沒有訂單</div>' : ''}
@@ -631,7 +828,6 @@
                 if (orders.length > 0) {
                     orders.forEach((o, idx) => {
                         const li = document.createElement('li');
-                        // 個人金額 = 數量 × 組價（不是單價）
                         const personalAmount = o.quantity * p.price;
                         li.innerHTML = `
                             <span style="color:#94a3b8; font-size:0.7rem; min-width:22px;">#${idx+1}</span>
@@ -670,35 +866,27 @@
 
         // ===== 初始化 =====
         async function init() {
-            const saved = localStorage.getItem('countdownEnd');
-            if (saved) {
-                const d = new Date(saved);
-                if (d > new Date()) { countdownEnd = d; startCountdown(); }
-                else { localStorage.removeItem('countdownEnd'); }
-            }
+            // 載入倒數設定
+            loadCountdownsFromStorage();
+
+            // 啟動所有倒數
+            Object.keys(productCountdowns).forEach(key => {
+                startProductCountdown(key);
+            });
 
             await loadOrders();
             setInterval(loadOrders, 30000);
 
+            // 事件綁定
             resetBtn.addEventListener('click', resetAll);
             exportBtn.addEventListener('click', exportData);
             importBtn.addEventListener('click', importData);
 
-            setCountdownBtn.addEventListener('click', () => {
-                const now = new Date();
-                const tomorrow = new Date(now);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                tomorrow.setHours(20, 0, 0, 0);
-                const y = tomorrow.getFullYear();
-                const m = String(tomorrow.getMonth()+1).padStart(2,'0');
-                const d = String(tomorrow.getDate()).padStart(2,'0');
-                const h = String(tomorrow.getHours()).padStart(2,'0');
-                const min = String(tomorrow.getMinutes()).padStart(2,'0');
-                countdownDate.value = `${y}-${m}-${d}T${h}:${min}`;
-                countdownModal.classList.add('active');
-                dropdownContent.classList.remove('active');
+            modalConfirm.addEventListener('click', () => {
+                if (settingProductId) {
+                    setProductCountdown(settingProductId, countdownDate.value);
+                }
             });
-            modalConfirm.addEventListener('click', () => setCountdown(countdownDate.value));
             modalCancel.addEventListener('click', () => countdownModal.classList.remove('active'));
             countdownModal.addEventListener('click', (e) => {
                 if (e.target === countdownModal) countdownModal.classList.remove('active');
