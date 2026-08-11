@@ -25,7 +25,6 @@
             margin-top: 10px;
         }
 
-        /* ===== 商品列表 ===== */
         .product-list {
             display: flex;
             flex-direction: column;
@@ -33,7 +32,6 @@
             margin-bottom: 16px;
         }
 
-        /* 單一商品卡片 */
         .product-card {
             background: #ffffff;
             border: 2px solid #e9edf2;
@@ -46,7 +44,6 @@
             box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
         }
 
-        /* 商品標題列（永遠顯示） */
         .product-header {
             display: flex;
             justify-content: space-between;
@@ -96,7 +93,6 @@
             color: #2563eb;
         }
 
-        /* 接龍區（預設隱藏） */
         .product-body {
             display: none;
             padding: 0 16px 16px 16px;
@@ -107,7 +103,6 @@
             display: block;
         }
 
-        /* 接龍區內部 */
         .product-body .stats-mini {
             display: flex;
             gap: 12px;
@@ -149,7 +144,6 @@
         .product-body .add-form button:active { background: #1d4ed8; transform: scale(0.95); }
         .product-body .add-form button:disabled { background: #94a3b8; cursor: not-allowed; }
 
-        /* 該商品的訂單清單 */
         .product-body .order-list {
             list-style: none;
             display: flex;
@@ -181,7 +175,6 @@
             font-size: 0.85rem;
         }
 
-        /* 總統計（頂部） */
         .global-stats {
             display: flex;
             justify-content: space-around;
@@ -195,7 +188,6 @@
         .global-stats .num { font-size: 1.3rem; font-weight: 700; color: #0f172a; }
         .global-stats .lbl { font-size: 0.7rem; color: #64748b; }
 
-        /* 下拉選單（右上角） */
         .header {
             display: flex;
             justify-content: space-between;
@@ -338,18 +330,16 @@
     <!-- 總統計 -->
     <div class="global-stats">
         <div><div class="num" id="totalPeople">0</div><div class="lbl">👤 人數</div></div>
-        <div><div class="num" id="totalQuantity">0</div><div class="lbl">🥯 總數量</div></div>
+        <div><div class="num" id="totalQuantity">0</div><div class="lbl">🥯 總組數</div></div>
         <div><div class="num" id="totalPrice">0</div><div class="lbl">💰 總金額</div></div>
     </div>
 
-    <!-- ===== 商品列表 ===== -->
-    <div class="product-list" id="productList">
-        <!-- 由 JavaScript 動態產生 -->
-    </div>
+    <!-- 商品列表 -->
+    <div class="product-list" id="productList"></div>
 
     <!-- 底部 -->
     <div style="text-align:center; font-size:0.7rem; color:#b9c1cc; border-top:1px solid #f1f5f9; padding-top:12px; margin-top:4px;">
-        點擊商品展開接龍 · 一次僅展開一項
+        點擊商品展開接龍 · 一次僅展開一項 · +1 = 1組
     </div>
 </div>
 
@@ -357,26 +347,23 @@
     (function() {
         "use strict";
 
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxyEj3FGVZKQ8_Z9-VmnaB4bs1KK-P6zDix33Xrj-Xqt7FPkd4vjHOMr3WPjURJ83tSOw/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxnLPTMQXAsiMOyOSkswK3124epzO6TQUxyUClRXBaSHq6Ouc6tuMFH5CcwRAvf8EzW1Q/exec';
 
-        // ===== 商品清單（可自行增減） =====
+        // ===== 商品清單 =====
         const PRODUCTS = [
             { id: 'p1', name: '🥯 滿滿起司貝果', price: 120, unit: 3, note: '🎉 嚐鮮價！回饋給阿邦好友' },
             { id: 'p2', name: '🍞 香蒜軟法', price: 150, unit: 2, note: '🔥 人氣推薦' },
             { id: 'p3', name: '🧀 雙倍起司吐司', price: 180, unit: 1, note: '🧀 起司控必買' },
         ];
 
-        // 計算單價
-        PRODUCTS.forEach(p => p.unitPrice = p.price / p.unit);
-
         // ===== 狀態 =====
-        let allOrders = [];          // 所有訂單 { id, productId, name, community, quantity }
+        let allOrders = [];
         let nextId = 1;
         let countdownEnd = null;
         let countdownInterval = null;
         let isExpired = false;
         let isLoading = false;
-        let activeProductId = null;   // 目前展開的商品 ID
+        let activeProductId = null;
 
         // ===== DOM =====
         const productListEl = document.getElementById('productList');
@@ -573,21 +560,21 @@
         // ===== 切換商品展開 =====
         function toggleProduct(productId) {
             if (activeProductId === productId) {
-                activeProductId = null;  // 關閉
+                activeProductId = null;
             } else {
-                activeProductId = productId;  // 開啟新的，關閉舊的
+                activeProductId = productId;
             }
             render();
         }
 
         // ===== 渲染 =====
         function render() {
-            // 統計總量
+            // 統計總量 - 用「組數」計算
             const totalPeopleCount = allOrders.length;
             const totalQty = allOrders.reduce((s, o) => s + o.quantity, 0);
             const totalAmt = allOrders.reduce((s, o) => {
                 const p = PRODUCTS.find(p => p.id === o.productId);
-                return s + (p ? o.quantity * p.unitPrice : 0);
+                return s + (p ? o.quantity * p.price : 0);  // 用 price（組價）
             }, 0);
             totalPeople.textContent = totalPeopleCount;
             totalQuantity.textContent = totalQty;
@@ -596,10 +583,9 @@
             // 渲染商品列表
             productListEl.innerHTML = '';
             PRODUCTS.forEach(p => {
-                // 該商品的訂單
                 const orders = allOrders.filter(o => o.productId === p.id);
                 const qty = orders.reduce((s, o) => s + o.quantity, 0);
-                const amt = qty * p.unitPrice;
+                const amt = qty * p.price;  // 用 price（組價）
                 const isActive = (activeProductId === p.id);
 
                 const card = document.createElement('div');
@@ -614,25 +600,25 @@
                         <div class="price">$${p.price} <small>/ ${p.unit}個</small></div>
                     </div>
                     <div style="display:flex; align-items:center; gap:6px;">
-                        <span class="badge">${orders.length}人 / ${qty}個</span>
+                        <span class="badge">${orders.length}人 / ${qty}組</span>
                         <span class="toggle-icon">${isActive ? '▾' : '▸'}</span>
                     </div>
                 `;
                 header.addEventListener('click', () => toggleProduct(p.id));
 
-                // 接龍區（展開時顯示）
+                // 接龍區
                 const body = document.createElement('div');
                 body.className = 'product-body';
                 body.innerHTML = `
                     <div class="stats-mini">
                         <span>👤 ${orders.length} 人</span>
-                        <span>🥯 ${qty} 個</span>
+                        <span>📦 ${qty} 組</span>
                         <span>💰 $${amt}</span>
                     </div>
                     <form class="add-form" id="form-${p.id}">
                         <input type="text" placeholder="姓名" class="name-input" required>
                         <input type="text" placeholder="社區" class="community-input" required>
-                        <input type="number" placeholder="數量" value="1" min="1" max="99" class="qty-input">
+                        <input type="number" placeholder="組數" value="1" min="1" max="99" class="qty-input">
                         <button type="submit" id="add-btn-${p.id}">＋ 加入</button>
                     </form>
                     <ul class="order-list" id="ol-${p.id}">
@@ -645,12 +631,14 @@
                 if (orders.length > 0) {
                     orders.forEach((o, idx) => {
                         const li = document.createElement('li');
+                        // 個人金額 = 數量 × 組價（不是單價）
+                        const personalAmount = o.quantity * p.price;
                         li.innerHTML = `
                             <span style="color:#94a3b8; font-size:0.7rem; min-width:22px;">#${idx+1}</span>
                             <span class="o-name">${o.name}</span>
                             <span style="font-size:0.7rem; color:#64748b; background:#f1f5f9; padding:0 8px; border-radius:40px;">${o.community || '未填寫'}</span>
-                            <span class="o-qty">+${o.quantity}</span>
-                            <span class="o-amount">$${o.quantity * p.unitPrice}</span>
+                            <span class="o-qty">${o.quantity}組</span>
+                            <span class="o-amount">$${personalAmount}</span>
                             <button class="o-del" data-id="${o.id}">✕</button>
                         `;
                         const del = li.querySelector('.o-del');
@@ -692,7 +680,6 @@
             await loadOrders();
             setInterval(loadOrders, 30000);
 
-            // 事件綁定
             resetBtn.addEventListener('click', resetAll);
             exportBtn.addEventListener('click', exportData);
             importBtn.addEventListener('click', importData);
