@@ -89,7 +89,6 @@
             flex-wrap: wrap;
         }
 
-        /* 商品倒數計時器 */
         .product-countdown {
             font-size: 0.8rem;
             font-weight: 700;
@@ -122,7 +121,6 @@
             color: #2563eb;
         }
 
-        /* 設定倒數按鈕（小） */
         .set-countdown-btn {
             background: #f1f5f9;
             border: none;
@@ -218,19 +216,6 @@
             font-size: 0.85rem;
         }
 
-        .global-stats {
-            display: flex;
-            justify-content: space-around;
-            background: #f8fafc;
-            border-radius: 16px;
-            padding: 10px;
-            margin-bottom: 16px;
-            border: 1px solid #e9edf2;
-        }
-        .global-stats div { text-align: center; flex: 1; }
-        .global-stats .num { font-size: 1.3rem; font-weight: 700; color: #0f172a; }
-        .global-stats .lbl { font-size: 0.7rem; color: #64748b; }
-
         .header {
             display: flex;
             justify-content: space-between;
@@ -273,7 +258,6 @@
         .dropdown-content button:active { background: #f1f5f9; }
         .dropdown-content .divider { height: 1px; background: #e9edf2; margin: 4px 12px; }
 
-        /* 倒數設定視窗 */
         .countdown-modal {
             display: none;
             position: fixed;
@@ -350,13 +334,6 @@
         </div>
     </div>
 
-    <!-- 總統計 -->
-    <div class="global-stats">
-        <div><div class="num" id="totalPeople">0</div><div class="lbl">👤 人數</div></div>
-        <div><div class="num" id="totalQuantity">0</div><div class="lbl">📦 總組數</div></div>
-        <div><div class="num" id="totalPrice">0</div><div class="lbl">💰 總金額</div></div>
-    </div>
-
     <!-- 商品列表 -->
     <div class="product-list" id="productList"></div>
 
@@ -386,7 +363,7 @@
     (function() {
         "use strict";
 
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzSMO-S4AJXkowTcV810ossl1neyE5uuU1wN9y1ROMD9_hpsfdLKi-IYshzpay5_q7UuQ/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxnLPTMQXAsiMOyOSkswK3124epzO6TQUxyUClRXBaSHq6Ouc6tuMFH5CcwRAvf8EzW1Q/exec';
 
         // ===== 商品清單 =====
         const PRODUCTS = [
@@ -396,8 +373,8 @@
         ];
 
         // ===== 每個商品的倒數狀態 =====
-        let productCountdowns = {};  // { productId: { endTime: Date, interval: id } }
-        let isExpiredMap = {};       // { productId: true/false }
+        let productCountdowns = {};
+        let isExpiredMap = {};
 
         // ===== 狀態 =====
         let allOrders = [];
@@ -412,11 +389,7 @@
         const resetBtn = document.getElementById('resetBtn');
         const exportBtn = document.getElementById('exportBtn');
         const importBtn = document.getElementById('importBtn');
-        const totalPeople = document.getElementById('totalPeople');
-        const totalQuantity = document.getElementById('totalQuantity');
-        const totalPrice = document.getElementById('totalPrice');
 
-        // 倒數設定視窗
         const countdownModal = document.getElementById('countdownModal');
         const countdownDate = document.getElementById('countdownDate');
         const modalProductName = document.getElementById('modalProductName');
@@ -465,7 +438,6 @@
 
         // ===== 新增 =====
         async function addOrder(productId, name, community, quantity) {
-            // 檢查該商品是否已截止
             if (isExpiredMap[productId]) {
                 alert('⏰ 此商品已截止，無法新增訂單');
                 return false;
@@ -522,7 +494,6 @@
             const data = productCountdowns[productId];
             if (!data || !data.endTime) return;
             
-            // 清除舊的 interval
             if (data.interval) {
                 clearInterval(data.interval);
             }
@@ -548,7 +519,6 @@
                     clearInterval(data.interval);
                     data.interval = null;
                 }
-                // 重新渲染以更新按鈕狀態
                 render();
                 return;
             }
@@ -575,7 +545,6 @@
                 return;
             }
 
-            // 清除舊的
             if (productCountdowns[productId] && productCountdowns[productId].interval) {
                 clearInterval(productCountdowns[productId].interval);
             }
@@ -586,27 +555,12 @@
             };
             isExpiredMap[productId] = false;
             
-            // 儲存到 localStorage
             saveCountdownsToStorage();
-
             startProductCountdown(productId);
             render();
             countdownModal.classList.remove('active');
         }
 
-        function removeProductCountdown(productId) {
-            if (productCountdowns[productId]) {
-                if (productCountdowns[productId].interval) {
-                    clearInterval(productCountdowns[productId].interval);
-                }
-                delete productCountdowns[productId];
-                delete isExpiredMap[productId];
-                saveCountdownsToStorage();
-                render();
-            }
-        }
-
-        // ===== 儲存倒數設定 =====
         function saveCountdownsToStorage() {
             const data = {};
             Object.keys(productCountdowns).forEach(key => {
@@ -674,7 +628,6 @@
                                         quantity: o.quantity
                                     });
                                 }
-                                // 匯入倒數設定
                                 if (data.countdowns) {
                                     Object.keys(data.countdowns).forEach(key => {
                                         const endTime = new Date(data.countdowns[key]);
@@ -713,7 +666,6 @@
             const product = PRODUCTS.find(p => p.id === productId);
             modalProductName.textContent = product ? product.name : '';
 
-            // 預設明天晚上8點
             const now = new Date();
             const tomorrow = new Date(now);
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -730,18 +682,7 @@
 
         // ===== 渲染 =====
         function render() {
-            // 統計總量
-            const totalPeopleCount = allOrders.length;
-            const totalQty = allOrders.reduce((s, o) => s + o.quantity, 0);
-            const totalAmt = allOrders.reduce((s, o) => {
-                const p = PRODUCTS.find(p => p.id === o.productId);
-                return s + (p ? o.quantity * p.price : 0);
-            }, 0);
-            totalPeople.textContent = totalPeopleCount;
-            totalQuantity.textContent = totalQty;
-            totalPrice.textContent = totalAmt;
-
-            // 啟動所有商品的倒數（如果還沒啟動）
+            // 啟動所有商品的倒數
             Object.keys(productCountdowns).forEach(key => {
                 const data = productCountdowns[key];
                 if (data && data.endTime && !data.interval) {
@@ -749,7 +690,6 @@
                 }
             });
 
-            // 渲染商品列表
             productListEl.innerHTML = '';
             PRODUCTS.forEach(p => {
                 const orders = allOrders.filter(o => o.productId === p.id);
@@ -762,11 +702,9 @@
                 const card = document.createElement('div');
                 card.className = 'product-card' + (isActive ? ' active' : '') + (isExpired ? ' expired' : '');
 
-                // 標題列
                 const header = document.createElement('div');
                 header.className = 'product-header';
                 
-                // 倒數顯示
                 let countdownText = '--:--:--';
                 if (hasCountdown) {
                     const diff = productCountdowns[p.id].endTime - new Date();
@@ -793,7 +731,6 @@
                     </div>
                 `;
 
-                // 設定倒數按鈕
                 const setBtn = header.querySelector('.set-countdown-btn');
                 setBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -802,7 +739,6 @@
 
                 header.addEventListener('click', () => toggleProduct(p.id));
 
-                // 接龍區
                 const body = document.createElement('div');
                 body.className = 'product-body';
                 body.innerHTML = `
@@ -823,7 +759,6 @@
                     </ul>
                 `;
 
-                // 訂單列表
                 const ol = body.querySelector('.order-list');
                 if (orders.length > 0) {
                     orders.forEach((o, idx) => {
@@ -843,7 +778,6 @@
                     });
                 }
 
-                // 表單提交
                 const form = body.querySelector('.add-form');
                 form.addEventListener('submit', async (e) => {
                     e.preventDefault();
@@ -866,10 +800,8 @@
 
         // ===== 初始化 =====
         async function init() {
-            // 載入倒數設定
             loadCountdownsFromStorage();
 
-            // 啟動所有倒數
             Object.keys(productCountdowns).forEach(key => {
                 startProductCountdown(key);
             });
@@ -877,7 +809,6 @@
             await loadOrders();
             setInterval(loadOrders, 30000);
 
-            // 事件綁定
             resetBtn.addEventListener('click', resetAll);
             exportBtn.addEventListener('click', exportData);
             importBtn.addEventListener('click', importData);
