@@ -236,7 +236,7 @@
             right: 0;
             top: 40px;
             background: white;
-            min-width: 160px;
+            min-width: 150px;
             border-radius: 16px;
             box-shadow: 0 8px 30px rgba(0,0,0,0.15);
             z-index: 100;
@@ -328,7 +328,6 @@
                     <button id="resetBtn">⟳ 重置全部</button>
                     <div class="divider"></div>
                     <button id="exportBtn">📤 匯出</button>
-                    <button id="importBtn">📥 匯入</button>
                 </div>
             </div>
         </div>
@@ -363,7 +362,7 @@
     (function() {
         "use strict";
 
-        const API_URL = 'https://script.google.com/macros/s/AKfycbx0C8vqtfvtAgoA8cL58aFzGNIqiS-V_zXgvgxe7oqnkQSBBcRpkPYtgWvagYD2HtbYAg/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxnLPTMQXAsiMOyOSkswK3124epzO6TQUxyUClRXBaSHq6Ouc6tuMFH5CcwRAvf8EzW1Q/exec';
 
         // ===== 商品清單 =====
         const PRODUCTS = [
@@ -388,7 +387,6 @@
         const dropdownContent = document.getElementById('dropdownContent');
         const resetBtn = document.getElementById('resetBtn');
         const exportBtn = document.getElementById('exportBtn');
-        const importBtn = document.getElementById('importBtn');
 
         const countdownModal = document.getElementById('countdownModal');
         const countdownDate = document.getElementById('countdownDate');
@@ -588,7 +586,7 @@
             } catch (_) {}
         }
 
-        // ===== 匯出 / 匯入 =====
+        // ===== 匯出 =====
         function exportData() {
             if (allOrders.length === 0) { alert('清單是空的'); return; }
             const data = JSON.stringify({ 
@@ -603,50 +601,6 @@
             a.download = `團購訂單-${new Date().toISOString().slice(0,10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            dropdownContent.classList.remove('active');
-        }
-
-        function importData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async function(ev) {
-                    try {
-                        const data = JSON.parse(ev.target.result);
-                        if (data.orders && Array.isArray(data.orders)) {
-                            if (confirm(`將匯入 ${data.orders.length} 個項目，是否取代目前清單？`)) {
-                                await apiCall('reset');
-                                for (const o of data.orders) {
-                                    await apiCall('addOrder', {
-                                        productId: o.productId || 'p1',
-                                        name: o.name,
-                                        community: o.community || '未填寫',
-                                        quantity: o.quantity
-                                    });
-                                }
-                                if (data.countdowns) {
-                                    Object.keys(data.countdowns).forEach(key => {
-                                        const endTime = new Date(data.countdowns[key]);
-                                        if (endTime > new Date()) {
-                                            productCountdowns[key] = { endTime: endTime, interval: null };
-                                            isExpiredMap[key] = false;
-                                        }
-                                    });
-                                    saveCountdownsToStorage();
-                                }
-                                await loadOrders();
-                                alert('匯入成功！');
-                            }
-                        } else { alert('檔案格式錯誤'); }
-                    } catch (_) { alert('無法讀取檔案'); }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
             dropdownContent.classList.remove('active');
         }
 
@@ -682,7 +636,6 @@
 
         // ===== 渲染 =====
         function render() {
-            // 啟動所有商品的倒數
             Object.keys(productCountdowns).forEach(key => {
                 const data = productCountdowns[key];
                 if (data && data.endTime && !data.interval) {
@@ -811,7 +764,6 @@
 
             resetBtn.addEventListener('click', resetAll);
             exportBtn.addEventListener('click', exportData);
-            importBtn.addEventListener('click', importData);
 
             modalConfirm.addEventListener('click', () => {
                 if (settingProductId) {
