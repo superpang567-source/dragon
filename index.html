@@ -98,6 +98,7 @@
             border-radius: 40px;
             white-space: nowrap;
         }
+        /* 已截止樣式 */
         .product-countdown.expired {
             color: #ef4444;
             background: #fee2e2;
@@ -362,8 +363,8 @@
     (function() {
         "use strict";
 
-        // ✅ 已設定正確的 API 網址
-        const API_URL = 'https://script.google.com/macros/s/AKfycby9Xpxcb9_HKJYiyQsoQiVQAQ8wy-u0ldjEe8s9XhjaRvMKovBzmngpaEXr0lAlzE_ppg/exec';
+        // ✅ 你的 API 網址
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxnLPTMQXAsiMOyOSkswK3124epzO6TQUxyUClRXBaSHq6Ouc6tuMFH5CcwRAvf8EzW1Q/exec';
 
         // ===== 商品清單 =====
         const PRODUCTS = [
@@ -512,8 +513,9 @@
 
             const diff = data.endTime - new Date();
             if (diff <= 0) {
+                // ✅ 倒數結束 → 顯示「已截止」
                 isExpiredMap[productId] = true;
-                updateCountdownElement(productId, '⏰ 已截止', true);
+                updateCountdownElement(productId, '已截止', true);
                 if (data.interval) {
                     clearInterval(data.interval);
                     data.interval = null;
@@ -660,10 +662,13 @@
                 header.className = 'product-header';
                 
                 let countdownText = '--:--:--';
+                let isExpiredState = false;
                 if (hasCountdown) {
                     const diff = productCountdowns[p.id].endTime - new Date();
                     if (diff <= 0) {
-                        countdownText = '⏰ 已截止';
+                        // ✅ 倒數結束 → 顯示「已截止」
+                        countdownText = '已截止';
+                        isExpiredState = true;
                     } else {
                         const h = String(Math.floor(diff / (1000*60*60))).padStart(2,'0');
                         const m = String(Math.floor((diff % (1000*60*60)) / (1000*60))).padStart(2,'0');
@@ -678,7 +683,7 @@
                         <div class="price">$${p.price} <small>/ ${p.unit}個</small></div>
                     </div>
                     <div class="right-area">
-                        <span class="product-countdown ${isExpired ? 'expired' : ''}" id="countdown-${p.id}">${countdownText}</span>
+                        <span class="product-countdown ${isExpiredState ? 'expired' : ''}" id="countdown-${p.id}">${countdownText}</span>
                         <button class="set-countdown-btn" data-id="${p.id}">⏰</button>
                         <span class="badge">${orders.length}人 / ${qty}組</span>
                         <span class="toggle-icon">${isActive ? '▾' : '▸'}</span>
