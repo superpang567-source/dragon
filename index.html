@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>團購接龍</title>
+    <title>團購接龍 · 阿邦團購</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             background: #f0f2f5;
             min-height: 100vh;
             display: flex;
             justify-content: center;
+            align-items: flex-start;
             padding: 16px;
         }
         .app {
@@ -19,67 +20,33 @@
             width: 100%;
             max-width: 500px;
             border-radius: 32px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
             padding: 20px 16px 24px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+            margin-top: 10px;
         }
 
-        /* 標題 */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-        .header h1 { font-size: 1.3rem; font-weight: 700; color: #1e293b; }
-        .sync-status { font-size: 0.7rem; color: #22c55e; }
-        .sync-status.syncing { color: #f59e0b; }
-        .sync-status.error { color: #ef4444; }
-
-        .dropdown-wrapper { position: relative; display: inline-block; }
-        .dropdown-btn { background: #f1f5f9; border: none; padding: 6px 12px; border-radius: 40px; font-size: 1.1rem; cursor: pointer; }
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 40px;
-            background: white;
-            min-width: 150px;
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            z-index: 100;
-            padding: 6px 0;
-            border: 1px solid #e9edf2;
-        }
-        .dropdown-content.active { display: block; }
-        .dropdown-content button {
-            display: block;
-            width: 100%;
-            padding: 8px 16px;
-            border: none;
-            background: none;
-            text-align: left;
-            font-size: 0.85rem;
-            cursor: pointer;
-            color: #1e293b;
-        }
-        .dropdown-content button:active { background: #f1f5f9; }
-        .dropdown-content .divider { height: 1px; background: #e9edf2; margin: 4px 12px; }
-
-        /* 商品列表 */
         .product-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
+            margin-bottom: 16px;
         }
 
         .product-card {
+            background: #ffffff;
             border: 2px solid #e9edf2;
             border-radius: 20px;
             overflow: hidden;
             transition: 0.2s;
         }
-        .product-card.active { border-color: #2563eb; box-shadow: 0 4px 16px rgba(37,99,235,0.12); }
-        .product-card.expired { border-color: #ef4444; opacity: 0.7; }
+        .product-card.active {
+            border-color: #2563eb;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
+        }
+        .product-card.expired {
+            border-color: #ef4444;
+            opacity: 0.7;
+        }
 
         .product-header {
             display: flex;
@@ -88,17 +55,41 @@
             padding: 14px 16px;
             cursor: pointer;
             background: #fafcff;
+            transition: 0.15s;
             flex-wrap: wrap;
             gap: 6px;
         }
-        .product-header .info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-        .product-header .name { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
-        .product-header .price { font-size: 0.85rem; font-weight: 600; color: #dc2626; }
-        .product-header .price small { font-weight: 400; color: #94a3b8; }
+        .product-header:active { background: #f1f5f9; }
 
-        .product-header .right-area { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .product-header .info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+        }
+        .product-header .name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .product-header .price {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #dc2626;
+        }
+        .product-header .price small {
+            font-weight: 400;
+            color: #94a3b8;
+        }
 
-        .countdown-badge {
+        .product-header .right-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .product-countdown {
             font-size: 0.8rem;
             font-weight: 700;
             color: #2563eb;
@@ -107,11 +98,29 @@
             border-radius: 40px;
             white-space: nowrap;
         }
-        .countdown-badge.expired { color: #ef4444; background: #fee2e2; }
+        /* 已截止樣式 */
+        .product-countdown.expired {
+            color: #ef4444;
+            background: #fee2e2;
+        }
 
-        .badge { font-size: 0.75rem; background: #dbeafe; color: #2563eb; padding: 2px 12px; border-radius: 40px; font-weight: 600; }
-        .toggle-icon { font-size: 1.3rem; color: #94a3b8; transition: 0.2s; }
-        .product-card.active .toggle-icon { transform: rotate(180deg); color: #2563eb; }
+        .product-header .badge {
+            font-size: 0.75rem;
+            background: #dbeafe;
+            color: #2563eb;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-weight: 600;
+        }
+        .product-header .toggle-icon {
+            font-size: 1.3rem;
+            color: #94a3b8;
+            transition: 0.2s;
+        }
+        .product-card.active .toggle-icon {
+            transform: rotate(180deg);
+            color: #2563eb;
+        }
 
         .set-countdown-btn {
             background: #f1f5f9;
@@ -122,15 +131,17 @@
             cursor: pointer;
             color: #475569;
         }
+        .set-countdown-btn:active { background: #e2e8f0; }
 
-        /* 接龍區 */
         .product-body {
             display: none;
             padding: 0 16px 16px 16px;
             border-top: 1px solid #e9edf2;
             background: #fafcff;
         }
-        .product-card.active .product-body { display: block; }
+        .product-card.active .product-body {
+            display: block;
+        }
 
         .product-body .stats-mini {
             display: flex;
@@ -198,9 +209,56 @@
         .product-body .order-list .o-amount { background: #fef3c7; color: #92400e; padding: 0 10px; border-radius: 40px; font-weight: 600; font-size: 0.8rem; }
         .product-body .order-list .o-del { background: none; border: none; color: #b91c1c; font-size: 1rem; cursor: pointer; padding: 0 4px; }
         .product-body .order-list .o-del:active { transform: scale(0.85); }
-        .product-body .empty-msg { text-align: center; padding: 16px 0; color: #a0aec0; font-size: 0.85rem; }
 
-        /* 倒數設定視窗 */
+        .product-body .empty-msg {
+            text-align: center;
+            padding: 16px 0;
+            color: #a0aec0;
+            font-size: 0.85rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .header h1 { font-size: 1.3rem; font-weight: 700; color: #1e293b; }
+        .sync-status { font-size: 0.7rem; color: #22c55e; }
+        .sync-status.syncing { color: #f59e0b; }
+        .sync-status.error { color: #ef4444; }
+
+        .dropdown-wrapper { position: relative; display: inline-block; }
+        .dropdown-btn { background: #f1f5f9; border: none; padding: 6px 12px; border-radius: 40px; font-size: 1.1rem; cursor: pointer; }
+        .dropdown-btn:active { transform: scale(0.92); }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 40px;
+            background: white;
+            min-width: 150px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            z-index: 100;
+            padding: 6px 0;
+            border: 1px solid #e9edf2;
+        }
+        .dropdown-content.active { display: block; }
+        .dropdown-content button {
+            display: block;
+            width: 100%;
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            text-align: left;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: #1e293b;
+        }
+        .dropdown-content button:active { background: #f1f5f9; }
+        .dropdown-content .divider { height: 1px; background: #e9edf2; margin: 4px 12px; }
+
         .countdown-modal {
             display: none;
             position: fixed;
@@ -241,7 +299,9 @@
             cursor: pointer;
         }
         .countdown-modal .modal-actions .btn-confirm { background: #2563eb; color: white; }
+        .countdown-modal .modal-actions .btn-confirm:active { background: #1d4ed8; }
         .countdown-modal .modal-actions .btn-cancel { background: #f1f5f9; color: #475569; }
+        .countdown-modal .modal-actions .btn-cancel:active { background: #e2e8f0; }
 
         .order-list::-webkit-scrollbar { width: 3px; }
         .order-list::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 20px; }
@@ -303,31 +363,33 @@
     (function() {
         "use strict";
 
-        // ⚠️ 請將這裡換成你自己的 API 網址
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxjDPMK5qVNzb25IMOQinPezhwu6TTj9MzEa1nasteRmfrDMpK5oB-LCsCMYwrHIl5v/exec
-';
+        // ✅ 你的 API 網址
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxnLPTMQXAsiMOyOSkswK3124epzO6TQUxyUClRXBaSHq6Ouc6tuMFH5CcwRAvf8EzW1Q/exec';
 
-        // 商品清單
+        // ===== 商品清單 =====
         const PRODUCTS = [
             { id: 'p1', name: '🥯 滿滿起司貝果', price: 120, unit: 3 },
             { id: 'p2', name: '🍞 香蒜軟法', price: 150, unit: 2 },
             { id: 'p3', name: '🧀 雙倍起司吐司', price: 180, unit: 1 },
         ];
 
-        // 狀態
-        let allOrders = [];
+        // ===== 每個商品的倒數狀態 =====
         let productCountdowns = {};
         let isExpiredMap = {};
-        let activeProductId = null;
-        let isLoading = false;
 
-        // DOM
+        // ===== 狀態 =====
+        let allOrders = [];
+        let isLoading = false;
+        let activeProductId = null;
+
+        // ===== DOM =====
         const productListEl = document.getElementById('productList');
         const syncStatus = document.getElementById('syncStatus');
         const dropdownBtn = document.getElementById('dropdownBtn');
         const dropdownContent = document.getElementById('dropdownContent');
         const resetBtn = document.getElementById('resetBtn');
         const exportBtn = document.getElementById('exportBtn');
+
         const countdownModal = document.getElementById('countdownModal');
         const countdownDate = document.getElementById('countdownDate');
         const modalProductName = document.getElementById('modalProductName');
@@ -336,13 +398,10 @@
         let settingProductId = null;
 
         // ===== 下拉選單 =====
-        dropdownBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dropdownContent.classList.toggle('active');
-        });
+        dropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownContent.classList.toggle('active'); });
         document.addEventListener('click', () => dropdownContent.classList.remove('active'));
 
-        // ===== API 呼叫 =====
+        // ===== API =====
         async function apiCall(action, params = {}) {
             const url = new URL(API_URL);
             url.searchParams.append('action', action);
@@ -350,12 +409,10 @@
             try {
                 const res = await fetch(url.toString());
                 return await res.json();
-            } catch (e) {
-                return { success: false, error: e.message };
-            }
+            } catch (e) { return { success: false, error: e.message }; }
         }
 
-        // ===== 載入訂單 =====
+        // ===== 載入 =====
         async function loadOrders() {
             if (isLoading) return;
             isLoading = true;
@@ -371,22 +428,21 @@
                 } else {
                     syncStatus.textContent = '● 錯誤';
                     syncStatus.className = 'sync-status error';
-                    console.error('API 錯誤:', result);
                 }
             } catch (e) {
                 syncStatus.textContent = '● 錯誤';
                 syncStatus.className = 'sync-status error';
-                console.error('載入錯誤:', e);
             }
             isLoading = false;
         }
 
-        // ===== 新增訂單 =====
+        // ===== 新增 =====
         async function addOrder(productId, name, community, quantity) {
             if (isExpiredMap[productId]) {
                 alert('⏰ 此商品已截止，無法新增訂單');
                 return false;
             }
+
             const trimmedName = name.trim();
             const trimmedCommunity = community.trim();
             if (!trimmedName || !trimmedCommunity) return false;
@@ -409,26 +465,17 @@
                     alert('新增失敗: ' + (result.error || '請稍後再試'));
                     return false;
                 }
-            } catch (e) {
-                alert('網路錯誤');
-                return false;
-            } finally {
-                if (btn) btn.disabled = false;
-            }
+            } catch (e) { alert('網路錯誤'); return false; }
+            finally { if (btn) btn.disabled = false; }
         }
 
-        // ===== 刪除訂單 =====
+        // ===== 刪除 =====
         async function deleteOrder(id) {
             try {
-                const result = await apiCall('deleteOrder', { id: id });
-                if (result.success) {
-                    await loadOrders();
-                } else {
-                    alert('刪除失敗');
-                }
-            } catch (e) {
-                alert('網路錯誤');
-            }
+                const result = await apiCall('deleteOrder', { id });
+                if (result.success) await loadOrders();
+                else alert('刪除失敗');
+            } catch (e) { alert('網路錯誤'); }
         }
 
         // ===== 重置 =====
@@ -439,31 +486,34 @@
                 await apiCall('reset');
                 await loadOrders();
                 dropdownContent.classList.remove('active');
-            } catch (e) {
-                alert('網路錯誤');
-            }
+            } catch (e) { alert('網路錯誤'); }
         }
 
-        // ===== 倒數計時 =====
-        function startCountdown(productId) {
+        // ===== 商品倒數計時 =====
+        function startProductCountdown(productId) {
             const data = productCountdowns[productId];
             if (!data || !data.endTime) return;
-            if (data.interval) clearInterval(data.interval);
+            
+            if (data.interval) {
+                clearInterval(data.interval);
+            }
 
-            updateCountdownDisplay(productId);
+            updateProductCountdownDisplay(productId);
             data.interval = setInterval(() => {
-                updateCountdownDisplay(productId);
+                updateProductCountdownDisplay(productId);
             }, 1000);
         }
 
-        function updateCountdownDisplay(productId) {
+        function updateProductCountdownDisplay(productId) {
             const data = productCountdowns[productId];
             if (!data || !data.endTime) {
                 updateCountdownElement(productId, '--:--:--', false);
                 return;
             }
+
             const diff = data.endTime - new Date();
             if (diff <= 0) {
+                // ✅ 倒數結束 → 顯示「已截止」
                 isExpiredMap[productId] = true;
                 updateCountdownElement(productId, '已截止', true);
                 if (data.interval) {
@@ -473,6 +523,7 @@
                 render();
                 return;
             }
+
             isExpiredMap[productId] = false;
             const h = String(Math.floor(diff / (1000*60*60))).padStart(2,'0');
             const m = String(Math.floor((diff % (1000*60*60)) / (1000*60))).padStart(2,'0');
@@ -484,28 +535,34 @@
             const el = document.querySelector(`#countdown-${productId}`);
             if (el) {
                 el.textContent = text;
-                el.className = 'countdown-badge' + (isExpired ? ' expired' : '');
+                el.className = 'product-countdown' + (isExpired ? ' expired' : '');
             }
         }
 
-        function setCountdown(productId, dateTime) {
+        function setProductCountdown(productId, dateTime) {
             const target = new Date(dateTime);
             if (isNaN(target.getTime()) || target <= new Date()) {
                 alert('請選擇未來的時間');
                 return;
             }
+
             if (productCountdowns[productId] && productCountdowns[productId].interval) {
                 clearInterval(productCountdowns[productId].interval);
             }
-            productCountdowns[productId] = { endTime: target, interval: null };
+
+            productCountdowns[productId] = {
+                endTime: target,
+                interval: null
+            };
             isExpiredMap[productId] = false;
-            saveCountdowns();
-            startCountdown(productId);
+            
+            saveCountdownsToStorage();
+            startProductCountdown(productId);
             render();
             countdownModal.classList.remove('active');
         }
 
-        function saveCountdowns() {
+        function saveCountdownsToStorage() {
             const data = {};
             Object.keys(productCountdowns).forEach(key => {
                 if (productCountdowns[key] && productCountdowns[key].endTime) {
@@ -515,7 +572,7 @@
             localStorage.setItem('productCountdowns', JSON.stringify(data));
         }
 
-        function loadCountdowns() {
+        function loadCountdownsFromStorage() {
             try {
                 const raw = localStorage.getItem('productCountdowns');
                 if (!raw) return;
@@ -534,14 +591,11 @@
 
         // ===== 匯出 =====
         function exportData() {
-            if (allOrders.length === 0) {
-                alert('清單是空的');
-                return;
-            }
-            const data = JSON.stringify({
-                orders: allOrders,
+            if (allOrders.length === 0) { alert('清單是空的'); return; }
+            const data = JSON.stringify({ 
+                orders: allOrders, 
                 countdowns: productCountdowns,
-                exportedAt: new Date().toISOString()
+                exportedAt: new Date().toISOString() 
             }, null, 2);
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -553,13 +607,17 @@
             dropdownContent.classList.remove('active');
         }
 
-        // ===== 切換商品 =====
+        // ===== 切換商品展開 =====
         function toggleProduct(productId) {
-            activeProductId = (activeProductId === productId) ? null : productId;
+            if (activeProductId === productId) {
+                activeProductId = null;
+            } else {
+                activeProductId = productId;
+            }
             render();
         }
 
-        // ===== 打開倒數設定 =====
+        // ===== 打開倒數設定視窗 =====
         function openCountdownModal(productId) {
             settingProductId = productId;
             const product = PRODUCTS.find(p => p.id === productId);
@@ -575,16 +633,16 @@
             const h = String(tomorrow.getHours()).padStart(2,'0');
             const min = String(tomorrow.getMinutes()).padStart(2,'0');
             countdownDate.value = `${y}-${m}-${d}T${h}:${min}`;
+
             countdownModal.classList.add('active');
         }
 
         // ===== 渲染 =====
         function render() {
-            // 啟動所有倒數
             Object.keys(productCountdowns).forEach(key => {
                 const data = productCountdowns[key];
                 if (data && data.endTime && !data.interval) {
-                    startCountdown(key);
+                    startProductCountdown(key);
                 }
             });
 
@@ -597,11 +655,18 @@
                 const isExpired = isExpiredMap[p.id] || false;
                 const hasCountdown = productCountdowns[p.id] && productCountdowns[p.id].endTime;
 
+                const card = document.createElement('div');
+                card.className = 'product-card' + (isActive ? ' active' : '') + (isExpired ? ' expired' : '');
+
+                const header = document.createElement('div');
+                header.className = 'product-header';
+                
                 let countdownText = '--:--:--';
                 let isExpiredState = false;
                 if (hasCountdown) {
                     const diff = productCountdowns[p.id].endTime - new Date();
                     if (diff <= 0) {
+                        // ✅ 倒數結束 → 顯示「已截止」
                         countdownText = '已截止';
                         isExpiredState = true;
                     } else {
@@ -612,18 +677,13 @@
                     }
                 }
 
-                const card = document.createElement('div');
-                card.className = 'product-card' + (isActive ? ' active' : '') + (isExpired ? ' expired' : '');
-
-                const header = document.createElement('div');
-                header.className = 'product-header';
                 header.innerHTML = `
                     <div class="info">
                         <div class="name">${p.name}</div>
                         <div class="price">$${p.price} <small>/ ${p.unit}個</small></div>
                     </div>
                     <div class="right-area">
-                        <span class="countdown-badge ${isExpiredState ? 'expired' : ''}" id="countdown-${p.id}">${countdownText}</span>
+                        <span class="product-countdown ${isExpiredState ? 'expired' : ''}" id="countdown-${p.id}">${countdownText}</span>
                         <button class="set-countdown-btn" data-id="${p.id}">⏰</button>
                         <span class="badge">${orders.length}人 / ${qty}組</span>
                         <span class="toggle-icon">${isActive ? '▾' : '▸'}</span>
@@ -635,6 +695,7 @@
                     e.stopPropagation();
                     openCountdownModal(p.id);
                 });
+
                 header.addEventListener('click', () => toggleProduct(p.id));
 
                 const body = document.createElement('div');
@@ -657,18 +718,17 @@
                     </ul>
                 `;
 
-                // 訂單列表
                 const ol = body.querySelector('.order-list');
                 if (orders.length > 0) {
                     orders.forEach((o, idx) => {
-                        const amount = o.quantity * p.price;
                         const li = document.createElement('li');
+                        const personalAmount = o.quantity * p.price;
                         li.innerHTML = `
                             <span style="color:#94a3b8; font-size:0.7rem; min-width:22px;">#${idx+1}</span>
                             <span class="o-name">${o.name}</span>
                             <span style="font-size:0.7rem; color:#64748b; background:#f1f5f9; padding:0 8px; border-radius:40px;">${o.community || '未填寫'}</span>
                             <span class="o-qty">${o.quantity}組</span>
-                            <span class="o-amount">$${amount}</span>
+                            <span class="o-amount">$${personalAmount}</span>
                             <button class="o-del" data-id="${o.id}">✕</button>
                         `;
                         const del = li.querySelector('.o-del');
@@ -677,7 +737,6 @@
                     });
                 }
 
-                // 表單提交
                 const form = body.querySelector('.add-form');
                 form.addEventListener('submit', async (e) => {
                     e.preventDefault();
@@ -700,10 +759,10 @@
 
         // ===== 初始化 =====
         async function init() {
-            loadCountdowns();
+            loadCountdownsFromStorage();
 
             Object.keys(productCountdowns).forEach(key => {
-                startCountdown(key);
+                startProductCountdown(key);
             });
 
             await loadOrders();
@@ -714,7 +773,7 @@
 
             modalConfirm.addEventListener('click', () => {
                 if (settingProductId) {
-                    setCountdown(settingProductId, countdownDate.value);
+                    setProductCountdown(settingProductId, countdownDate.value);
                 }
             });
             modalCancel.addEventListener('click', () => countdownModal.classList.remove('active'));
